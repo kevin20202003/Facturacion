@@ -58,66 +58,90 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
-## Instalación del sistema de facturación (resumen)
+## Instalación y despliegue en entorno local (sin Docker)
 
-Requisitos:
-- XAMPP con MySQL en ejecución
-- PHP compatible con Laravel 12
+Requisitos mínimos:
+- PHP 8.2+ con las extensiones habituales (`pdo_mysql`, `mbstring`, `xml`, `gd`, `bcmath`).
 - Composer
+- Servidor MySQL/MariaDB (XAMPP, WAMP, servidor local o remoto)
 
-Pasos rápidos:
+Pasos (rápidos):
 
-1. Clona o coloca el repositorio en `C:/Users/Usuario/Desktop/Facturacion`.
-2. Copia `.env.example` a `.env` y configura la conexión a MySQL. Ejemplo para XAMPP:
+1. Clona el repositorio en tu carpeta de trabajo:
 
-```
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=facturacion
-DB_USERNAME=root
-DB_PASSWORD=
+```bash
+git clone <repo-url> C:/Users/Usuario/Desktop/Facturacion
+cd C:/Users/Usuario/Desktop/Facturacion
 ```
 
-3. Crea la base de datos (por phpMyAdmin o desde línea de comandos):
+2. Copia el archivo de ejemplo y ajusta variables de entorno (conexión a la BD, correo, Stripe, etc.):
 
+```bash
+cp .env.example .env
+# Edita .env y deja las credenciales de MySQL (ej. XAMPP):
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=facturacion
+# DB_USERNAME=root
+# DB_PASSWORD=
 ```
+
+3. Crea la base de datos (phpMyAdmin o línea de comandos). Ejemplo en Windows con XAMPP:
+
+```powershell
+# Ajusta la ruta si tu instalación es distinta
 "C:\\xampp\\mysql\\bin\\mysql.exe" -u root -e "CREATE DATABASE IF NOT EXISTS facturacion CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
-4. Instala dependencias (si es necesario):
+4. Instala dependencias y prepara la aplicación:
 
 ```bash
-composer install
-```
-
-5. Genera la clave de la aplicación y ejecuta migraciones y seeders:
-
-```bash
+composer install --no-interaction --prefer-dist
 php artisan key:generate
 php artisan migrate --force
 php artisan db:seed
+php artisan storage:link
 ```
 
-6. Inicia el servidor de desarrollo:
+5. Ejecuta la aplicación localmente (opciones):
+
+- Usando el servidor de desarrollo de Laravel (rápido):
 
 ```bash
-php artisan serve
+php artisan serve --host=127.0.0.1 --port=8000
 ```
 
-Rutas importantes:
-- `/clients` — gestión básica de clientes
-- `/products` — gestión básica de productos
-- `/invoices/create` — crear factura (formulario simple)
+- O configura un virtual host en XAMPP/Apache apuntando a la carpeta `public/`.
 
-Patrones aplicados:
+6. Accede a la app en `http://127.0.0.1:8000` (o el host configurado).
+
+Rutas importantes:
+- `/clients` — gestión de clientes
+- `/products` — gestión de productos
+- `/invoices/create` — crear factura
+
+Configuración adicional recomendada:
+- Añade claves de Stripe en `.env` (`STRIPE_KEY`, `STRIPE_SECRET`, `STRIPE_WEBHOOK_SECRET`) si vas a usar pagos.
+- Configura correo (`MAIL_MAILER`, `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD`) para envío de facturas.
+
+Ejecutar tests:
+
+```bash
+php artisan test
+```
+
+Cómo probar Stripe localmente sin Docker:
+- Si dispones de Stripe CLI: `stripe listen --forward-to http://127.0.0.1:8000/stripe/webhook` y copia `STRIPE_WEBHOOK_SECRET` en `.env`.
+- Si no, usa el comando incluido para simular webhooks: `php artisan stripe:simulate checkout.session.completed --invoice={id} --paid`.
+
+Arquitectura y patrones utilizados:
 - Repositories: `app/Repositories`
 - Services: `app/Services`
 - Strategy (impuestos): `app/Services/Tax`
-- Observer (ajusta stock): `app/Observers/InvoiceObserver.php`
+- Observers: `app/Observers` (auditoría, ajuste de stock)
 
 Próximos pasos sugeridos:
-- Extender la UI para manejar múltiples items dinámicos por factura
-- Agregar autenticación y autorización
-- Implementar tests automatizados para `InvoiceService`
+- Añadir pruebas E2E (Cypress) para flujos críticos
+- Internacionalizar vistas y mensajes (i18n)
 

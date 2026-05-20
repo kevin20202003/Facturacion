@@ -34,3 +34,8 @@ Route::middleware('auth')->group(function () {
 
 // Stripe webhook endpoint (no auth)
 Route::post('stripe/webhook', [\App\Http\Controllers\StripeWebhookController::class, 'handle']);
+
+// Load API routes under /api prefix
+Route::prefix('api')->group(function () {
+    require __DIR__ . '/api.php';
+});
