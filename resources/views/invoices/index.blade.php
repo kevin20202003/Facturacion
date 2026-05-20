@@ -23,6 +23,7 @@
                     <th>Cliente</th>
                     <th>Fecha</th>
                     <th class="text-end">Total</th>
+                    <th class="text-end">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -32,6 +33,10 @@
                         <td>{{ $invoice->client->name ?? '' }}</td>
                         <td>{{ $invoice->date }}</td>
                         <td class="text-end">{{ number_format($invoice->total, 2) }}</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" href="{{ route('invoices.show', $invoice->id) }}">Ver</a>
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('invoices.pdf', $invoice->id) }}" target="_blank">PDF</a>
+                        </td>
                     </tr>
                 @endforeach
             </tbody>

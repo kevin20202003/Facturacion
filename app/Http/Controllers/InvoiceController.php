@@ -10,6 +10,9 @@ use App\Services\Tax\TaxStrategyInterface;
 use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\InvoiceCreated;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends Controller
 {
@@ -68,6 +71,20 @@ class InvoiceController extends Controller
         }
 
         $invoice = $this->invoiceService->createInvoice(array_merge($data, ['client_id' => $data['client_id']]), $items);
+
+        // Cargar relaciones necesarias
+        $invoice->load('client', 'items.product');
+
+        // Intentar generar PDF y enviar correo al cliente (no debe romper la creación si falla)
+        try {
+            $pdfData = PDF::loadView('invoices.pdf', compact('invoice'))->output();
+            if (! empty($invoice->client->email)) {
+                Mail::to($invoice->client->email)->send(new InvoiceCreated($invoice, $pdfData));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Fallo al enviar correo de factura: ' . $e->getMessage());
+        }
+
         return redirect()->route('invoices.create')->with('status', 'Factura creada: '.$invoice->invoice_number);
     }
 
