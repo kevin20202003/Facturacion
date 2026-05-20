@@ -25,10 +25,11 @@ class InvoiceService
     public function createInvoice(array $data, array $items)
     {
         $subtotal = 0;
-        foreach ($items as $i) {
-            $subtotal += ($i['quantity'] * $i['unit_price']);
+        foreach ($items as &$i) {
             $i['total'] = round($i['quantity'] * $i['unit_price'], 2);
+            $subtotal += $i['total'];
         }
+        unset($i);
 
         $tax = $this->taxStrategy->calculate($subtotal);
         $total = round($subtotal + $tax, 2);

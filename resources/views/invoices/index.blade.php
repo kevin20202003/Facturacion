@@ -6,6 +6,13 @@
         <a class="btn btn-primary" href="{{ route('invoices.create') }}">Nueva factura</a>
     </div>
 
+    <form method="GET" class="mb-3">
+        <div class="input-group">
+            <input name="q" value="{{ request('q') }}" class="form-control" placeholder="Buscar facturas (número o cliente)...">
+            <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+        </div>
+    </form>
+
     @if($invoices->isEmpty())
         <div class="alert alert-info">No hay facturas aún.</div>
     @else
@@ -29,5 +36,8 @@
                 @endforeach
             </tbody>
         </table>
+        <div class="mt-3">
+            {{ $invoices->links() }}
+        </div>
     @endif
 @endsection

@@ -24,4 +24,6 @@ Route::middleware('auth')->group(function () {
     Route::resource('clients', ClientController::class)->only(['index','create','store']);
     Route::resource('products', ProductController::class)->only(['index','create','store']);
     Route::resource('invoices', InvoiceController::class)->only(['index','create','store','show']);
+    Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+    Route::get('reports/sales', [\App\Http\Controllers\ReportsController::class, 'sales'])->name('reports.sales');
 });

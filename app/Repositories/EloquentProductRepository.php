@@ -11,6 +11,16 @@ class EloquentProductRepository implements ProductRepositoryInterface
         return Product::all();
     }
 
+    public function paginate(int $perPage = 15, ?string $search = null)
+    {
+        $query = Product::query();
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%");
+        }
+        return $query->paginate($perPage);
+    }
+
     public function find(int $id)
     {
         return Product::find($id);

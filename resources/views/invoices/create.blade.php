@@ -5,11 +5,21 @@
     <form method="POST" action="{{ route('invoices.store') }}" id="invoiceForm">
         @csrf
 
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="mb-3">
             <label class="form-label">Cliente</label>
             <select name="client_id" class="form-select" required>
                 @foreach($clients as $c)
-                    <option value="{{ $c->id }}">{{ $c->name }}</option>
+                    <option value="{{ $c->id }}" {{ old('client_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                 @endforeach
             </select>
         </div>
@@ -17,11 +27,11 @@
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label class="form-label">Número de factura</label>
-                <input name="invoice_number" class="form-control" required />
+                <input name="invoice_number" class="form-control" value="{{ old('invoice_number') }}" required />
             </div>
             <div class="col-md-6">
                 <label class="form-label">Fecha</label>
-                <input type="date" name="date" class="form-control" />
+                <input type="date" name="date" class="form-control" value="{{ old('date') }}" />
             </div>
         </div>
 
@@ -70,6 +80,7 @@
     const products = @json($products->map(fn($p) => ['id' => $p->id, 'name' => $p->name, 'price' => (float) $p->price]));
     let taxRate = {{ $taxRate ?? 0.21 }};
     let itemIndex = 0;
+    const oldItems = @json(old('items', []));
 
     function createRow(productId = null, quantity = 1) {
         const tr = document.createElement('tr');
@@ -113,18 +124,31 @@
         document.getElementById('total').textContent = total.toFixed(2);
     }
 
-    document.getElementById('addItem').addEventListener('click', () => {
-        const row = createRow();
-        document.getElementById('itemsBody').appendChild(row);
+    function addRowListeners(row) {
         row.querySelector('.productSelect').addEventListener('change', recalc);
         row.querySelector('.qty').addEventListener('input', recalc);
         row.querySelector('.removeItem').addEventListener('click', function() { row.remove(); recalc(); });
+    }
+
+    document.getElementById('addItem').addEventListener('click', () => {
+        const row = createRow();
+        document.getElementById('itemsBody').appendChild(row);
+        addRowListeners(row);
         recalc();
     });
 
     document.getElementById('invoiceForm').addEventListener('input', recalc);
 
-    // Add one default row
-    document.getElementById('addItem').click();
+    // Restore old items after validation error or add a default row
+    if (oldItems && oldItems.length) {
+        oldItems.forEach(it => {
+            const row = createRow(it.product_id ?? null, it.quantity ?? 1);
+            document.getElementById('itemsBody').appendChild(row);
+            addRowListeners(row);
+        });
+    } else {
+        document.getElementById('addItem').click();
+    }
+    recalc();
 </script>
 @endsection

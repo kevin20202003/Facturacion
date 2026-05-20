@@ -6,6 +6,13 @@
         <a class="btn btn-primary" href="{{ route('clients.create') }}">Nuevo cliente</a>
     </div>
 
+    <form method="GET" class="mb-3">
+        <div class="input-group">
+            <input name="q" value="{{ request('q') }}" class="form-control" placeholder="Buscar clientes...">
+            <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+        </div>
+    </form>
+
     <table class="table table-striped">
         <thead>
             <tr>
@@ -26,4 +33,7 @@
             @endforeach
         </tbody>
     </table>
+    <div class="mt-3">
+        {{ $clients->links() }}
+    </div>
 @endsection

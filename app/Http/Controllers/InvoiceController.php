@@ -7,6 +7,8 @@ use App\Repositories\ClientRepositoryInterface;
 use App\Repositories\ProductRepositoryInterface;
 use App\Services\InvoiceService;
 use App\Services\Tax\TaxStrategyInterface;
+use App\Models\Invoice;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
@@ -28,7 +30,8 @@ class InvoiceController extends Controller
 
     public function index()
     {
-        $invoices = $this->invoices->all();
+        $q = request('q');
+        $invoices = $this->invoices->paginate(15, $q);
         return view('invoices.index', compact('invoices'));
     }
 
@@ -66,5 +69,25 @@ class InvoiceController extends Controller
 
         $invoice = $this->invoiceService->createInvoice(array_merge($data, ['client_id' => $data['client_id']]), $items);
         return redirect()->route('invoices.create')->with('status', 'Factura creada: '.$invoice->invoice_number);
+    }
+
+    public function show($id)
+    {
+        $invoice = $this->invoices->find($id);
+        if (! $invoice) {
+            abort(404);
+        }
+        return view('invoices.show', compact('invoice'));
+    }
+
+    public function pdf($id)
+    {
+        $invoice = $this->invoices->find($id);
+        if (! $invoice) {
+            abort(404);
+        }
+
+        $pdf = PDF::loadView('invoices.pdf', compact('invoice'));
+        return $pdf->download('factura_' . $invoice->invoice_number . '.pdf');
     }
 }

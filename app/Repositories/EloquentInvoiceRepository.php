@@ -11,6 +11,18 @@ class EloquentInvoiceRepository implements InvoiceRepositoryInterface
         return Invoice::with('items')->find($id);
     }
 
+    public function paginate(int $perPage = 15, ?string $search = null)
+    {
+        $query = Invoice::with('client', 'items.product');
+        if ($search) {
+            $query->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhereHas('client', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+        }
+        return $query->paginate($perPage);
+    }
+
     public function all()
     {
         return Invoice::with('client', 'items.product')->get();
