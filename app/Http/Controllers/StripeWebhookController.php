@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use App\Models\Invoice;
+use App\Services\Notifier;
 
 class StripeWebhookController extends Controller
 {
@@ -16,7 +17,7 @@ class StripeWebhookController extends Controller
         $secret = config('services.stripe.webhook_secret') ?: env('STRIPE_WEBHOOK_SECRET');
 
         if (empty($secret)) {
-            Log::warning('Stripe webhook received but no webhook secret configured.');
+            Notifier::critical('Stripe webhook received but no webhook secret configured.');
             return response('Webhook secret not configured', 500);
         }
 
@@ -24,10 +25,10 @@ class StripeWebhookController extends Controller
             $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $secret);
         } catch (\UnexpectedValueException $e) {
             // Invalid payload
-            Log::warning('Invalid Stripe payload: ' . $e->getMessage());
+            Notifier::critical('Invalid Stripe payload: ' . $e->getMessage());
             return response('Invalid payload', 400);
         } catch (\Stripe\Exception\SignatureVerificationException $e) {
-            Log::warning('Invalid Stripe signature: ' . $e->getMessage());
+            Notifier::critical('Invalid Stripe signature: ' . $e->getMessage());
             return response('Invalid signature', 400);
         }
 

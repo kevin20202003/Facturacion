@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('invoices', InvoiceController::class)->only(['index','create','store','show']);
     Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
     Route::get('reports/sales', [\App\Http\Controllers\ReportsController::class, 'sales'])->name('reports.sales')->middleware(\App\Http\Middleware\RoleMiddleware::class . ':admin');
+    Route::get('audits', [\App\Http\Controllers\AuditController::class, 'index'])->name('audits.index')->middleware(\App\Http\Middleware\RoleMiddleware::class . ':admin');
     Route::get('invoices/{invoice}/pay', [InvoiceController::class, 'pay'])->name('invoices.pay');
     Route::post('invoices/{invoice}/checkout', [InvoiceController::class, 'checkout'])->name('invoices.checkout');
     Route::get('invoices/{invoice}/success', [InvoiceController::class, 'paymentSuccess'])->name('invoices.success');

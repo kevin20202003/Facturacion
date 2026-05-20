@@ -4,7 +4,11 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Models\Invoice;
+use App\Models\Product;
+use App\Models\Client;
 use App\Observers\InvoiceObserver;
+use App\Observers\ProductObserver;
+use App\Observers\ClientObserver;
 use App\Repositories\ClientRepositoryInterface;
 use App\Repositories\EloquentClientRepository;
 use App\Repositories\ProductRepositoryInterface;
@@ -39,5 +43,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register model observers
         Invoice::observe(InvoiceObserver::class);
+        Product::observe(ProductObserver::class);
+        Client::observe(ClientObserver::class);
     }
 }

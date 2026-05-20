@@ -22,6 +22,11 @@
                     <li class="nav-item"><a class="nav-link" href="{{ route('products.index') }}">Productos</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('invoices.index') }}">Facturas</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('reports.sales') }}">Reportes</a></li>
+                    @auth
+                        @if(Auth::user()->isAdmin())
+                            <li class="nav-item"><a class="nav-link" href="{{ route('audits.index') }}">Auditoría</a></li>
+                        @endif
+                    @endauth
                 </ul>
 
                 <ul class="navbar-nav ms-auto">

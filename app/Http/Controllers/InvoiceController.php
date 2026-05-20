@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceCreated;
 use Illuminate\Support\Facades\Log;
+use App\Services\Notifier;
 use Stripe\StripeClient;
 
 class InvoiceController extends Controller
@@ -83,7 +84,7 @@ class InvoiceController extends Controller
                 Mail::to($invoice->client->email)->send(new InvoiceCreated($invoice, $pdfData));
             }
         } catch (\Throwable $e) {
-            Log::error('Fallo al enviar correo de factura: ' . $e->getMessage());
+            Notifier::critical('Fallo al enviar correo de factura: ' . $e->getMessage(), ['invoice_id' => $invoice->id, 'client_email' => $invoice->client->email ?? null]);
         }
 
         return redirect()->route('invoices.create')->with('status', 'Factura creada: '.$invoice->invoice_number);
@@ -143,7 +144,7 @@ class InvoiceController extends Controller
             ]);
             return redirect($session->url);
         } catch (\Throwable $e) {
-            Log::error('Stripe checkout error: ' . $e->getMessage());
+            Notifier::critical('Stripe checkout error: ' . $e->getMessage(), ['invoice_id' => $invoice->id]);
             return redirect()->route('invoices.show', $invoice->id)->with('error', 'No se pudo iniciar el pago.');
         }
     }
@@ -163,7 +164,7 @@ class InvoiceController extends Controller
                     $invoice->update(['status' => 'paid']);
                 }
             } catch (\Throwable $e) {
-                Log::warning('Stripe session verification failed: ' . $e->getMessage());
+                Notifier::critical('Stripe session verification failed: ' . $e->getMessage(), ['invoice_id' => $invoice->id, 'session_id' => $sessionId]);
             }
         }
 
