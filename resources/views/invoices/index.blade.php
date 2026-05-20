@@ -36,6 +36,9 @@
                         <td class="text-end">
                             <a class="btn btn-sm btn-outline-primary" href="{{ route('invoices.show', $invoice->id) }}">Ver</a>
                             <a class="btn btn-sm btn-outline-secondary" href="{{ route('invoices.pdf', $invoice->id) }}" target="_blank">PDF</a>
+                            @if(($invoice->status ?? '') !== 'paid')
+                                <a class="btn btn-sm btn-success" href="{{ route('invoices.pay', $invoice->id) }}">Pagar</a>
+                            @endif
                         </td>
                     </tr>
                 @endforeach

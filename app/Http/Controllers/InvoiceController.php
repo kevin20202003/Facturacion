@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceCreated;
 use Illuminate\Support\Facades\Log;
+use Stripe\StripeClient;
 
 class InvoiceController extends Controller
 {
@@ -106,5 +107,66 @@ class InvoiceController extends Controller
 
         $pdf = PDF::loadView('invoices.pdf', compact('invoice'));
         return $pdf->download('factura_' . $invoice->invoice_number . '.pdf');
+    }
+
+    public function pay($id)
+    {
+        $invoice = $this->invoices->find($id);
+        if (! $invoice) abort(404);
+        return view('invoices.pay', compact('invoice'));
+    }
+
+    public function checkout(Request $request, $id)
+    {
+        $invoice = $this->invoices->find($id);
+        if (! $invoice) abort(404);
+
+        $secret = config('services.stripe.secret') ?: env('STRIPE_SECRET');
+        $currency = env('STRIPE_CURRENCY', 'usd');
+
+        try {
+            $stripe = new StripeClient($secret);
+            $session = $stripe->checkout->sessions->create([
+                'payment_method_types' => ['card'],
+                'mode' => 'payment',
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => $currency,
+                        'product_data' => ['name' => 'Factura ' . $invoice->invoice_number],
+                        'unit_amount' => (int) round($invoice->total * 100),
+                    ],
+                    'quantity' => 1,
+                ]],
+                'success_url' => route('invoices.success', $invoice->id) . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('invoices.show', $invoice->id),
+                'metadata' => ['invoice_id' => $invoice->id],
+            ]);
+            return redirect($session->url);
+        } catch (\Throwable $e) {
+            Log::error('Stripe checkout error: ' . $e->getMessage());
+            return redirect()->route('invoices.show', $invoice->id)->with('error', 'No se pudo iniciar el pago.');
+        }
+    }
+
+    public function paymentSuccess(Request $request, $id)
+    {
+        $invoice = $this->invoices->find($id);
+        if (! $invoice) abort(404);
+
+        $sessionId = $request->query('session_id');
+        if ($sessionId) {
+            try {
+                $secret = config('services.stripe.secret') ?: env('STRIPE_SECRET');
+                $stripe = new StripeClient($secret);
+                $session = $stripe->checkout->sessions->retrieve($sessionId);
+                if ($session && (($session->payment_status ?? null) === 'paid')) {
+                    $invoice->update(['status' => 'paid']);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Stripe session verification failed: ' . $e->getMessage());
+            }
+        }
+
+        return redirect()->route('invoices.show', $invoice->id)->with('status', 'Pago confirmado.');
     }
 }
