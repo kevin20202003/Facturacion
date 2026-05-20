@@ -25,8 +25,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('products', ProductController::class)->only(['index','create','store']);
     Route::resource('invoices', InvoiceController::class)->only(['index','create','store','show']);
     Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
-    Route::get('reports/sales', [\App\Http\Controllers\ReportsController::class, 'sales'])->name('reports.sales');
+    Route::get('reports/sales', [\App\Http\Controllers\ReportsController::class, 'sales'])->name('reports.sales')->middleware(\App\Http\Middleware\RoleMiddleware::class . ':admin');
     Route::get('invoices/{invoice}/pay', [InvoiceController::class, 'pay'])->name('invoices.pay');
     Route::post('invoices/{invoice}/checkout', [InvoiceController::class, 'checkout'])->name('invoices.checkout');
     Route::get('invoices/{invoice}/success', [InvoiceController::class, 'paymentSuccess'])->name('invoices.success');
 });
+
+// Stripe webhook endpoint (no auth)
+Route::post('stripe/webhook', [\App\Http\Controllers\StripeWebhookController::class, 'handle']);
